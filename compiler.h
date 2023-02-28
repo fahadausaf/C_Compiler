@@ -57,21 +57,19 @@ typedef char (*LEX_PROCESS_PEEK_CHAR)(struct lex_process *process);
 typedef void (*LEX_PROCESS_PUSH_CHAR)(struct lex_process *process, char c);
 
 struct lex_process_functions
-{
+{   // lexer structs to read and peak next character, and push current character on the stack to build a token
     LEX_PROCESS_NEXT_CHAR next_char;
     LEX_PROCESS_PEEK_CHAR peek_char;
     LEX_PROCESS_PUSH_CHAR push_char;
 };
 
 struct lex_process
-{
-    struct pos pos;
-    struct vector *token_vec;
-    struct compile_process *compiler;
+{   // this struct contains the information of the tokens/lexemes being lexed
 
-    /*
-    ((50))
-    */
+    struct pos pos;                     //position of token
+    struct vector *token_vec;           //vector of tokens
+    struct compile_process *compiler;   //file being compiled, from where we get the tokens
+
     int current_expression_count; // number of brackets. e.g. ((50)) two expressions before 50
     struct buffer *parenthesis_buffer;
     struct lex_process_functions *function;
@@ -88,7 +86,8 @@ enum
 };
 
 struct compile_process
-{
+{   // this struct holds the information of the file being compiled
+
     // The flags in regards to how this file should be compiled
     int flags;
 
@@ -99,7 +98,7 @@ struct compile_process
         const char *abs_path;
     } cfile;
 
-    FILE *ofile;
+    FILE *ofile;    //name of object file created after compilation
 };
 
 int compile_file(const char *filename, const char *out_filename, int flags);
@@ -107,7 +106,7 @@ struct compile_process *compile_process_create(const char *filename, const char 
 
 char compile_process_next_char(struct lex_process *lex_process);
 char compile_process_peek_char(struct lex_process *lex_process);
-void compile_process_push_char(struct lex_process *lex_process);
+void compile_process_push_char(struct lex_process *lex_process, char c);
 
 #include "compiler.h"
 #include "helpers/vector.h"

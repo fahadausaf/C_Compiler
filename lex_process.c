@@ -3,13 +3,14 @@
 #include <stdlib.h>
 
 struct lex_process *lex_process_create(struct compile_process *compiler, struct lex_process_functions *functions, void *private)
-{
-    struct lex_process *process = calloc(1, sizeof(struct lex_process));
-    process->function = functions;
-    process->token_vec = vector_create(sizeof(struct token));
-    process->compiler = compiler;
+{   // This function sets up the details required for the lexer in a struct lex_process
+
+    struct lex_process *process = calloc(1, sizeof(struct lex_process));    //struct containing lexer details
+    process->function = functions;                              //lexer functions to read, peak and push characters
+    process->token_vec = vector_create(sizeof(struct token));   //vector containing tokens
+    process->compiler = compiler;   // struct containing details of file to be compiled
     process->private = private;
-    process->pos.line = 1;
+    process->pos.line = 1;          // line and column number of the of the first token in the file
     process->pos.col = 1;
     return process;
 }

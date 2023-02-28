@@ -3,7 +3,8 @@
 #include "compiler.h"
 
 struct compile_process *compile_process_create(const char *filename, const char *filename_out, int flags)
-{
+{   // This function initialises the struct which holds the information about the file being compiled
+
     FILE *file = fopen(filename, "r");
     if (!file)
     {
