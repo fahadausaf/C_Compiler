@@ -44,6 +44,7 @@ struct token
 {
     int type; // type of the token from token enum
     int flags;
+    struct pos pos;
 
     union
     {
