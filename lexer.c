@@ -2,13 +2,14 @@
 #include <string.h>
 #include "helpers/vector.h"
 #include "helpers/buffer.h"
+#include <assert.h>
 
 #define LEX_GETC_IF(buffer, c, exp)     \
     for (c = peekc(); exp; c = peekc()) \
     {                                   \
         buffer_write(buffer, c);        \
         nextc();                        \
-    }                                   \
+    }
 
 struct token *read_next_token();
 
@@ -28,7 +29,6 @@ static char nextc()
     {
         lex_process->pos.line += 1;
         lex_process->pos.col += 1;
-
     }
 
     return c;
@@ -44,21 +44,21 @@ static struct pos lex_file_position()
     return lex_process->pos;
 }
 
-struct token* token_create(struct token* _token)
+struct token *token_create(struct token *_token)
 {
     memcpy(&tmp_token, _token, sizeof(struct token));
     tmp_token.pos = lex_file_position();
     return &tmp_token;
 }
 
-static struct token* lexer_last_token()
+static struct token *lexer_last_token()
 {
     return vector_back_or_null(lex_process->token_vec);
 }
 
-static struct token* handle_whitespace()
+static struct token *handle_whitespace()
 {
-    struct token* last_token = lexer_last_token();
+    struct token *last_token = lexer_last_token();
     if (last_token)
     {
         last_token->whitespace = true;
@@ -68,10 +68,10 @@ static struct token* handle_whitespace()
     return read_next_token();
 }
 
-const char* read_number_str()
+const char *read_number_str()
 {
-    const char* num = NULL;
-    struct buffer* buffer = buffer_create();
+    const char *num = NULL;
+    struct buffer *buffer = buffer_create();
     char c = peekc();
     LEX_GETC_IF(buffer, c, (c >= '0' && c <= '9'));
 
@@ -81,18 +81,38 @@ const char* read_number_str()
 
 unsigned long long read_number()
 {
-    const char* s = read_number_str();
+    const char *s = read_number_str();
     return atoll(s);
 }
 
-struct token* token_make_number_for_value(unsigned long number)
+struct token *token_make_number_for_value(unsigned long number)
 {
-    return token_create(&(struct token){.type=TOKEN_TYPE_NUMBER,.llnum=number});
+    return token_create(&(struct token){.type = TOKEN_TYPE_NUMBER, .llnum = number});
 }
 
 struct token *token_make_number()
 {
     return token_make_number_for_value(read_number());
+}
+
+static struct token *token_make_string(char star_delim, char end_delim)
+{
+    struct buffer *buf = buffer_create();
+    assert(nextc() == star_delim);
+    char c = nextc();
+    for (; c != end_delim && c != EOF; c = nextc())
+    {
+        if (c == '\\')
+        {
+            // handle the escape character
+            continue;
+        }
+
+        buffer_write(buf, c);
+    }
+
+    buffer_write(buf, 0x00);
+    return token_create(&(struct token){.type = TOKEN_TYPE_STRING, .sval = buffer_ptr(buf)});
 }
 
 struct token *read_next_token()
@@ -104,6 +124,10 @@ struct token *read_next_token()
     {
     NUMERIC_CASE:
         token = token_make_number();
+        break;
+
+    case '"':
+        token = token_make_string('"', '"');
         break;
 
     // We don't care about whitespaces, ignore them
